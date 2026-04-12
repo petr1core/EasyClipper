@@ -123,7 +123,7 @@ namespace EasyClipper
         private void DropZone_Click(object sender, MouseButtonEventArgs e) =>
             AddFiles_Click(sender, new RoutedEventArgs());
 
-        private void AddItems(string[] paths)
+        private async void AddItems(string[] paths)
         {
             var collected = new List<string>();
             foreach (var p in paths)
@@ -145,6 +145,8 @@ namespace EasyClipper
                 return;
             }
 
+            var newFiles = new List<TrackedFile>();
+
             foreach (var fp in collected)
             {
                 if (_paths.Contains(fp)) continue;
@@ -152,8 +154,10 @@ namespace EasyClipper
                 {
                     var fi = new FileInfo(fp);
                     if (!IsText(fp)) continue;
-                    _files.Add(new TrackedFile(fi));
+                    var trackedFile = new TrackedFile(fi);
+                    _files.Add(trackedFile);
                     _paths.Add(fp);
+                    newFiles.Add(trackedFile);
                 }
                 catch (Exception ex)
                 {
@@ -162,6 +166,17 @@ namespace EasyClipper
             }
 
             UpdateVisibility();
+
+            // Дожидаемся загрузки всех новых файлов
+            foreach (var file in newFiles)
+            {
+                // Ждем пока CharCount станет не 0 (или таймаут)
+                for (int i = 0; i < 50 && file.CharCount == 0; i++)
+                {
+                    await Task.Delay(100);
+                }
+            }
+
             RefreshStats();
         }
 
@@ -350,7 +365,7 @@ namespace EasyClipper
             if (dlg.ShowDialog() == true)
             {
                 File.WriteAllText(dlg.FileName, content, Encoding.UTF8);
-                ShowInfo($"Файл сохранён:\n{dlg.FileName}");
+                //ShowInfo($"Файл сохранён:\n{dlg.FileName}");
             }
         }
 
@@ -361,12 +376,14 @@ namespace EasyClipper
         {
             var sel         = _files.Where(f => f.IsSelected).ToList();
             long totalChars = sel.Sum(f => f.CharCount);
+            long totalTokens = sel.Sum(f => f.TokenCount);
             double totalKb  = sel.Sum(f => f.SizeKb);
             int modCount    = _files.Count(f => f.Status == FileStatus.Modified);
 
             RunTotal.Text    = _files.Count.ToString();
             RunSelected.Text = sel.Count.ToString();
             RunChars.Text    = totalChars.ToString("N0", new System.Globalization.CultureInfo("ru-RU"));
+            RunTokens.Text = totalTokens.ToString("N0", new System.Globalization.CultureInfo("tu-RU"));
             RunSize.Text     = $"{totalKb:F1} КБ";
             RunModified.Text = modCount.ToString();
 

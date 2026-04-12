@@ -547,6 +547,23 @@
                             </GridViewColumn>
 
                             <!-- Char count -->
+                            <GridViewColumn Header="Токенов" Width="90">
+                                <GridViewColumn.HeaderContainerStyle>
+                                    <Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource {x:Type GridViewColumnHeader}}">
+                                        <Setter Property="HorizontalContentAlignment" Value="Right"/>
+                                    </Style>
+                                </GridViewColumn.HeaderContainerStyle>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding TokenCount, StringFormat={}{0:N0}}"
+                                                   FontSize="12" Foreground="#666666"
+                                                   HorizontalAlignment="Right"
+                                                   FontFamily="Consolas"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+
+
                             <GridViewColumn Header="Символов" Width="90">
                                 <GridViewColumn.HeaderContainerStyle>
                                     <Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource {x:Type GridViewColumnHeader}}">
@@ -648,6 +665,10 @@
                     <TextBlock FontSize="12" Foreground="#666666" VerticalAlignment="Center">
                         <Run Text="Символов:"/>
                         <Run x:Name="RunChars" Text="0" FontWeight="SemiBold" Foreground="#222222"/>
+                    </TextBlock>
+                    <TextBlock FontSize="12" Foreground="#666666" VerticalAlignment="Center">
+                        <Run Text="  Токенов:"/>
+                        <Run x:Name="RunTokens" Text="0" FontWeight="SemiBold" Foreground="#222222"/>
                     </TextBlock>
                     <TextBlock Text=" · " FontSize="12" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                     <TextBlock FontSize="12" Foreground="#666666" VerticalAlignment="Center">
