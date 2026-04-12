@@ -48,3 +48,5 @@ dotnet build -c Release
 <img width="1064" height="641" alt="image" src="https://github.com/user-attachments/assets/cb9f0049-1cb6-4f69-bdb2-ffc68f19c257" />
 <img width="1156" height="641" alt="image" src="https://github.com/user-attachments/assets/f0d53a1b-91a4-4139-b3ee-acd794854bdc" />
 <img width="1156" height="641" alt="image" src="https://github.com/user-attachments/assets/04266e07-0b49-4ee3-b60d-7eb703a8e4ea" />
+___
+*ридми надо обновить, но, может, еще чуть-чуть отдохнуть...
