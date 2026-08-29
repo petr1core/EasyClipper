@@ -1,19 +1,35 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UseWPF>true</UseWPF>
     <AssemblyName>EasyClipper</AssemblyName>
     <RootNamespace>EasyClipper</RootNamespace>
-    <ApplicationIcon>app.ico</ApplicationIcon>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BootstrapIcons.Wpf" Version="1.13.0" />
+    <PackageReference Include="Avalonia" Version="11.3.2" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.2" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.2" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.2" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.2" Condition="'$(Configuration)' == 'Debug'" />
     <PackageReference Include="TiktokenSharp" Version="1.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+
+  <!-- Dev tool (headless design check) is a separate project, exclude from this one -->
+  <ItemGroup>
+    <Compile Remove="tools\**" />
+    <EmbeddedResource Remove="tools\**" />
+    <None Remove="tools\**" />
+    <AvaloniaXaml Remove="tools\**" />
   </ItemGroup>
 
 </Project>

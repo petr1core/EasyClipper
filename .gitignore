@@ -416,3 +416,7 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# NuGet cache dirs used on networks where api.nuget.org is unreachable
+.nuget-packages/
+.nuget-http-cache/

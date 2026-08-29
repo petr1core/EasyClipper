@@ -5,16 +5,17 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
-using Microsoft.Win32;
+using System.Threading.Tasks;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 
 namespace EasyClipper
 {
-    public partial class MainWindow : Window, INotifyPropertyChanged
+    public partial class MainWindow : Window
     {
         // ── State ────────────────────────────────────────────────────────
         private readonly ObservableCollection<TrackedFile> _files = new();
@@ -32,11 +33,6 @@ namespace EasyClipper
                 ".rs", ".swift", ".kt", ".kts", ".groovy", ".gradle",
                 ".properties",
             };
-
-        // ── INotifyPropertyChanged ───────────────────────────────────────
-        public event PropertyChangedEventHandler? PropertyChanged;
-        private void Notify(string p) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
 
         // ── Constructor ──────────────────────────────────────────────────
         public MainWindow()
@@ -70,57 +66,72 @@ namespace EasyClipper
         // ═══════════════════════════════════════════════════════════════
         // FILE ADDING
         // ═══════════════════════════════════════════════════════════════
-        private void Window_DragEnter(object sender, DragEventArgs e)
+        private void Window_DragEnter(object? sender, DragEventArgs e)
         {
-            e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop)
+            e.DragEffects = e.Data.Contains(DataFormats.Files)
                 ? DragDropEffects.Copy
                 : DragDropEffects.None;
             e.Handled = true;
         }
 
-        private void Window_Drop(object sender, DragEventArgs e)
+        private void Window_Drop(object? sender, DragEventArgs e)
         {
-            if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
-            var items = (string[])e.Data.GetData(DataFormats.FileDrop);
-            Mouse.OverrideCursor = Cursors.Wait;
-            try   { AddItems(items); }
-            finally { Mouse.OverrideCursor = null; }
+            if (!e.Data.Contains(DataFormats.Files)) return;
+            var items = e.Data.GetFiles()?
+                .Select(f => f.TryGetLocalPath())
+                .Where(p => !string.IsNullOrEmpty(p))
+                .Cast<string>()
+                .ToArray();
+            if (items is { Length: > 0 })
+            {
+                Cursor = new Cursor(StandardCursorType.Wait);
+                try   { AddItems(items); }
+                finally { Cursor = Cursor.Default; }
+            }
             e.Handled = true;
         }
 
-        private void AddFolder_Click(object sender, RoutedEventArgs e)
+        private async void AddFolder_Click(object? sender, RoutedEventArgs e)
         {
-            // WPF не имеет FolderBrowserDialog → используем хак через OpenFileDialog
-            var dlg = new OpenFileDialog
-            {
-                Title            = "Выберите любой файл в папке (папка будет добавлена целиком)",
-                CheckFileExists  = false,
-                FileName         = "Выберите папку",
-                Filter           = "All files (*.*)|*.*",
-                ValidateNames    = false,
-            };
-            if (dlg.ShowDialog() == true)
-            {
-                var dir = Path.GetDirectoryName(dlg.FileName);
-                if (dir != null) AddItems(new[] { dir });
-            }
+            var folders = await StorageProvider.OpenFolderPickerAsync(
+                new FolderPickerOpenOptions { Title = "Выберите папку" });
+            if (folders.Count > 0)
+                AddItems(folders
+                    .Select(f => f.TryGetLocalPath())
+                    .Where(p => !string.IsNullOrEmpty(p))
+                    .Cast<string>()
+                    .ToArray());
         }
 
-        private void AddFiles_Click(object sender, RoutedEventArgs e)
+        private async void AddFiles_Click(object? sender, RoutedEventArgs e)
         {
-            var dlg = new OpenFileDialog
+            var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                Multiselect = true,
-                Title       = "Выберите файлы",
-                Filter      = "Текстовые файлы|*.txt;*.cs;*.py;*.js;*.ts;*.jsx;*.tsx;" +
-                              "*.html;*.css;*.json;*.xml;*.cpp;*.h;*.java;*.go;*.rs;*.md|" +
-                              "Все файлы (*.*)|*.*",
-            };
-            if (dlg.ShowDialog() == true)
-                AddItems(dlg.FileNames);
+                Title = "Выберите файлы",
+                AllowMultiple = true,
+                FileTypeFilter = new[]
+                {
+                    new FilePickerFileType("Текстовые файлы")
+                    {
+                        Patterns = new[]
+                        {
+                            "*.txt", "*.cs", "*.py", "*.js", "*.ts", "*.jsx", "*.tsx",
+                            "*.html", "*.css", "*.json", "*.xml", "*.cpp", "*.h",
+                            "*.java", "*.go", "*.rs", "*.md",
+                        }
+                    },
+                    FilePickerFileTypes.All,
+                },
+            });
+            if (files.Count > 0)
+                AddItems(files
+                    .Select(f => f.TryGetLocalPath())
+                    .Where(p => !string.IsNullOrEmpty(p))
+                    .Cast<string>()
+                    .ToArray());
         }
 
-        private void DropZone_Click(object sender, MouseButtonEventArgs e) =>
+        private void DropZone_Click(object? sender, PointerPressedEventArgs e) =>
             AddFiles_Click(sender, new RoutedEventArgs());
 
         private async void AddItems(string[] paths)
@@ -140,8 +151,7 @@ namespace EasyClipper
 
             if (collected.Count == 0)
             {
-                MessageBox.Show("Поддерживаемых текстовых файлов не найдено.",
-                    "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                MsgBox.Show(this, "Поддерживаемых текстовых файлов не найдено.", "Информация");
                 return;
             }
 
@@ -201,22 +211,23 @@ namespace EasyClipper
         // ═══════════════════════════════════════════════════════════════
         // SELECTION
         // ═══════════════════════════════════════════════════════════════
-        private void SelectAll_Click(object sender, RoutedEventArgs e)    => SetAll(true);
-        private void DeselectAll_Click(object sender, RoutedEventArgs e)  => SetAll(false);
+        private void SelectAll_Click(object? sender, RoutedEventArgs e)    => SetAll(true);
+        private void DeselectAll_Click(object? sender, RoutedEventArgs e)  => SetAll(false);
         private void SetAll(bool val) { foreach (var f in _files) f.IsSelected = val; }
 
-        private void HeaderCheckBox_Click(object sender, RoutedEventArgs e)
+        private void HeaderCheckBox_Click(object? sender, RoutedEventArgs e)
         {
             bool val = HeaderCheckBox.IsChecked == true;
             SetAll(val);
         }
 
-        private void RowCheckBox_Click(object sender, RoutedEventArgs e)  => RefreshStats();
-        private void TreeItemCb_Click(object sender, RoutedEventArgs e)   => RefreshStats();
+        private void RowCheckBox_Click(object? sender, RoutedEventArgs e)  => RefreshStats();
+        private void TreeItemCb_Click(object? sender, RoutedEventArgs e)   => RefreshStats();
 
-        private void TreeItem_Click(object sender, MouseButtonEventArgs e)
+        private void TreeItem_Click(object? sender, PointerPressedEventArgs e)
         {
-            if (sender is Border b && b.DataContext is TrackedFile f)
+            if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed &&
+                sender is Border b && b.DataContext is TrackedFile f)
             {
                 // Scroll main list to matching item
                 MainListView.ScrollIntoView(f);
@@ -227,7 +238,7 @@ namespace EasyClipper
         // ═══════════════════════════════════════════════════════════════
         // REMOVE / CLEAR
         // ═══════════════════════════════════════════════════════════════
-        private void RemoveFile_Click(object sender, RoutedEventArgs e)
+        private void RemoveFile_Click(object? sender, RoutedEventArgs e)
         {
             if (sender is Button { Tag: TrackedFile f })
             {
@@ -238,11 +249,11 @@ namespace EasyClipper
             }
         }
 
-        private void Clear_Click(object sender, RoutedEventArgs e)
+        private void Clear_Click(object? sender, RoutedEventArgs e)
         {
             if (_files.Count == 0) return;
-            if (MessageBox.Show("Очистить список файлов?", "Подтверждение",
-                    MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            if (!MsgBox.Show(this, "Очистить список файлов?", "Подтверждение",
+                    MsgBox.Buttons.YesNo, MsgBox.Icon.Question))
                 return;
             _files.Clear();
             _paths.Clear();
@@ -253,11 +264,11 @@ namespace EasyClipper
         // ═══════════════════════════════════════════════════════════════
         // REFRESH STATUS
         // ═══════════════════════════════════════════════════════════════
-        private void Refresh_Click(object sender, RoutedEventArgs e)
+        private void Refresh_Click(object? sender, RoutedEventArgs e)
         {
-            Mouse.OverrideCursor = Cursors.Wait;
+            Cursor = new Cursor(StandardCursorType.Wait);
             try   { foreach (var f in _files) f.UpdateStatus(); }
-            finally { Mouse.OverrideCursor = null; }
+            finally { Cursor = Cursor.Default; }
             RefreshStats();
         }
 
@@ -268,7 +279,7 @@ namespace EasyClipper
         {
             bool usePrefix     = ChkPrefix.IsChecked == true;
             bool optImports    = ChkOptImports.IsChecked == true;
-            string tpl         = TbPrefixTemplate.Text;
+            string tpl         = TbPrefixTemplate.Text ?? string.Empty;
             int sepCount       = int.TryParse(TbSepLines.Text, out var n) ? Math.Max(0, n) : 2;
             string separator   = new string('\n', sepCount + 1); // +1 for newline after content
 
@@ -303,7 +314,7 @@ namespace EasyClipper
         // ═══════════════════════════════════════════════════════════════
         // COPY
         // ═══════════════════════════════════════════════════════════════
-        private void Copy_Click(object sender, RoutedEventArgs e)
+        private async void Copy_Click(object? sender, RoutedEventArgs e)
         {
             var selected = _files.Where(f => f.IsSelected).ToList();
             if (selected.Count == 0)
@@ -312,60 +323,67 @@ namespace EasyClipper
                 return;
             }
 
-            Mouse.OverrideCursor = Cursors.Wait;
+            Cursor = new Cursor(StandardCursorType.Wait);
             try
             {
                 string output = BuildOutput(selected);
-                Clipboard.SetText(output);
+                var clipboard = Clipboard;
+                if (clipboard != null)
+                    await clipboard.SetTextAsync(output);
 
                 // Кратковременно меняем текст кнопки
                 BtnCopy.Content = "✓ Скопировано!";
                 BtnCopy.Background = new SolidColorBrush(Color.FromRgb(0x1A, 0x7A, 0x3A));
-                var timer = new System.Windows.Threading.DispatcherTimer
+                var timer = new DispatcherTimer
                     { Interval = TimeSpan.FromSeconds(2) };
                 timer.Tick += (_, _) =>
                 {
-                    BtnCopy.Content    = "⎘ Скопировать выбранные";
+                    BtnCopy.Content    = "📋 Скопировать выбранные";
                     BtnCopy.Background = new SolidColorBrush(Color.FromRgb(0x5A, 0x4F, 0xC8));
                     timer.Stop();
                 };
                 timer.Start();
             }
             catch (Exception ex) { ShowError($"Ошибка копирования:\n{ex.Message}"); }
-            finally { Mouse.OverrideCursor = null; }
+            finally { Cursor = Cursor.Default; }
         }
 
         // ═══════════════════════════════════════════════════════════════
         // EXPORT
         // ═══════════════════════════════════════════════════════════════
-        private void ExportOnly_Click(object sender, RoutedEventArgs e)
+        private async void ExportOnly_Click(object? sender, RoutedEventArgs e)
         {
             var selected = _files.Where(f => f.IsSelected).ToList();
             if (selected.Count == 0) { ShowInfo("Нет выбранных файлов."); return; }
 
-            Mouse.OverrideCursor = Cursors.Wait;
-            try   { ExportToFile(BuildOutput(selected)); }
+            Cursor = new Cursor(StandardCursorType.Wait);
+            try   { await ExportToFile(BuildOutput(selected)); }
             catch (Exception ex) { ShowError($"Ошибка экспорта:\n{ex.Message}"); }
-            finally { Mouse.OverrideCursor = null; }
+            finally { Cursor = Cursor.Default; }
         }
 
-        private void ExportToFile(string content)
+        private async Task ExportToFile(string content)
         {
             var ts    = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
             var fname = $"clipper_export_{ts}.txt";
 
-            var dlg = new SaveFileDialog
+            var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
-                FileName         = fname,
-                DefaultExt       = ".txt",
-                Filter           = "Текстовые файлы (*.txt)|*.txt|Все файлы (*.*)|*.*",
-                Title            = "Сохранить экспорт",
-            };
+                SuggestedFileName = fname,
+                DefaultExtension  = "txt",
+                FileTypeChoices   = new[]
+                {
+                    new FilePickerFileType("Текстовые файлы (*.txt)") { Patterns = new[] { "*.txt" } },
+                    FilePickerFileTypes.All,
+                },
+                Title = "Сохранить экспорт",
+            });
 
-            if (dlg.ShowDialog() == true)
+            if (file != null)
             {
-                File.WriteAllText(dlg.FileName, content, Encoding.UTF8);
-                //ShowInfo($"Файл сохранён:\n{dlg.FileName}");
+                await using var stream = await file.OpenWriteAsync();
+                var bytes = Encoding.UTF8.GetBytes(content);
+                await stream.WriteAsync(bytes);
             }
         }
 
@@ -383,7 +401,7 @@ namespace EasyClipper
             RunTotal.Text    = _files.Count.ToString();
             RunSelected.Text = sel.Count.ToString();
             RunChars.Text    = totalChars.ToString("N0", new System.Globalization.CultureInfo("ru-RU"));
-            RunTokens.Text = totalTokens.ToString("N0", new System.Globalization.CultureInfo("tu-RU"));
+            RunTokens.Text = totalTokens.ToString("N0", new System.Globalization.CultureInfo("ru-RU"));
             RunSize.Text     = $"{totalKb:F1} КБ";
             RunModified.Text = modCount.ToString();
 
@@ -401,25 +419,26 @@ namespace EasyClipper
         private void UpdateVisibility()
         {
             bool hasFiles = _files.Count > 0;
-            EmptyState.Visibility   = hasFiles ? Visibility.Collapsed  : Visibility.Visible;
-            MainListView.Visibility = hasFiles ? Visibility.Visible    : Visibility.Collapsed;
+            EmptyState.IsVisible   = !hasFiles;
+            MainListView.IsVisible = hasFiles;
         }
 
         // ═══════════════════════════════════════════════════════════════
         // INPUT VALIDATION
         // ═══════════════════════════════════════════════════════════════
-        private void TbSepLines_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        private void TbSepLines_TextInput(object? sender, TextInputEventArgs e)
         {
-            e.Handled = !int.TryParse(e.Text, out _);
+            foreach (var ch in e.Text ?? string.Empty)
+                if (!char.IsDigit(ch)) { e.Handled = true; return; }
         }
 
         // ═══════════════════════════════════════════════════════════════
         // HELPERS
         // ═══════════════════════════════════════════════════════════════
-        private static void ShowError(string msg) =>
-            MessageBox.Show(msg, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        private void ShowError(string msg) =>
+            MsgBox.Show(this, msg, "Ошибка", MsgBox.Buttons.OK, MsgBox.Icon.Error);
 
-        private static void ShowInfo(string msg) =>
-            MessageBox.Show(msg, "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+        private void ShowInfo(string msg) =>
+            MsgBox.Show(this, msg, "Информация");
     }
 }

@@ -1,0 +1,34 @@
+<Window x:Class="EasyClipper.MsgBoxWindow"
+        xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Easy Clipper"
+        Width="400"
+        SizeToContent="Height"
+        CanResize="False"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#F5F5F0"
+        FontFamily="Inter, Segoe UI">
+    <Border Background="#FFFFFF" BorderBrush="#E0DDD5" BorderThickness="1" CornerRadius="8" Margin="10" Padding="20,18">
+        <StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                <TextBlock x:Name="TxtIcon" FontSize="22" Margin="0,0,10,0" VerticalAlignment="Top"/>
+                <TextBlock x:Name="TxtMessage" FontSize="13" Foreground="#333333"
+                           TextWrapping="Wrap" MaxWidth="320" VerticalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="BtnCancel" Content="Нет"
+                        Background="#FFFFFF" BorderBrush="#D0CDC5" BorderThickness="1"
+                        Foreground="#333333" FontSize="12" Padding="16,5"
+                        CornerRadius="6" Margin="0,0,8,0"
+                        IsVisible="False"
+                        Click="BtnCancel_Click"/>
+                <Button x:Name="BtnOk" Content="ОК"
+                        Background="#5A4FC8" BorderBrush="#5A4FC8" BorderThickness="1"
+                        Foreground="#FFFFFF" FontSize="12" FontWeight="Medium" Padding="20,5"
+                        CornerRadius="6"
+                        Click="BtnOk_Click"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

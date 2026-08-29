@@ -2,17 +2,17 @@ name: Build EasyClipper
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "linux_main" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "linux_main" ]
   workflow_dispatch:  # Позволяет запускать вручную
 
 jobs:
-  build:
-    runs-on: windows-latest
+  build-linux:
+    runs-on: ubuntu-latest
 
     env:
-      PROJECT_PATH: EasyClipper.csproj  # ← Укажите правильный путь
+      PROJECT_PATH: EasyClipper.csproj
       PUBLISH_DIR: EasyClipper/publish
 
     steps:
@@ -25,24 +25,21 @@ jobs:
         dotnet-version: '8.0.x'
 
     - name: 📦 Restore dependencies
-      run: dotnet restore $env:PROJECT_PATH
+      run: dotnet restore $PROJECT_PATH
 
     - name: 🔨 Build
-      run: dotnet build $env:PROJECT_PATH -c Release --no-restore
+      run: dotnet build $PROJECT_PATH -c Release --no-restore
 
-    # Опционально: публикация как self-contained (больше размер, но не требует .NET на машине пользователя)
-    # - name: 🚀 Publish (self-contained)
-    #   run: |
-    #     dotnet publish $env:PROJECT_PATH -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -o $env:PUBLISH_DIR
-
-    # публикацияframework-dependent (меньше размер, но требует .NET 8 Runtime)
-    - name: 🚀 Publish (framework-dependent)
+    # Публикация под Linux x64 (self-contained single file)
+    - name: 🚀 Publish (linux-x64, self-contained)
       run: |
-        dotnet publish $env:PROJECT_PATH -c Release -o $env:PUBLISH_DIR
+        dotnet publish $PROJECT_PATH -c Release -r linux-x64 \
+          --self-contained true -p:PublishSingleFile=true \
+          -p:EnableCompressionInSingleFile=true -o $PUBLISH_DIR
 
     - name: 📤 Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: EasyClipper-${{ github.sha }}
+        name: EasyClipper-linux-x64-${{ github.sha }}
         path: ${{ env.PUBLISH_DIR }}
         retention-days: 7

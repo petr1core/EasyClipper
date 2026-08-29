@@ -1,0 +1,622 @@
+<Window x:Class="EasyClipper.MainWindow"
+        xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:EasyClipper"
+        Title="Easy Clipper"
+        Width="1080" Height="680"
+        MinWidth="820" MinHeight="520"
+        Icon="avares://EasyClipper/Assets/AppIcon.png"
+        Background="#F5F5F0"
+        FontFamily="Inter, Segoe UI"
+        DragDrop.AllowDrop="True"
+        DragDrop.DragEnter="Window_DragEnter"
+        DragDrop.Drop="Window_Drop">
+
+    <Window.Resources>
+        <!-- Converters -->
+        <local:LangToBadgeBrushConverter x:Key="LangBrush"/>
+        <local:LangToBadgeFgConverter x:Key="LangFg"/>
+        <local:StatusToColorConverter x:Key="StatusColor"/>
+        <local:FileSizeConverter x:Key="FileSizeConv"/>
+        <local:CharCountConverter x:Key="CharCountConv"/>
+
+        <!-- Button base theme -->
+        <ControlTheme x:Key="BtnBase" TargetType="Button">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#D0CDC5"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,5"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="6"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter Name="PART_ContentPresenter"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+            <Style Selector="^:pointerover /template/ Border#Bd">
+                <Setter Property="Background" Value="#F5F5F0"/>
+            </Style>
+            <Style Selector="^:pressed /template/ Border#Bd">
+                <Setter Property="Background" Value="#EEEAE8"/>
+            </Style>
+        </ControlTheme>
+
+        <!-- Primary (purple) button -->
+        <ControlTheme x:Key="BtnPrimary" TargetType="Button" BasedOn="{StaticResource BtnBase}">
+            <Setter Property="Background" Value="#5A4FC8"/>
+            <Setter Property="BorderBrush" Value="#5A4FC8"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Padding" Value="18,7"/>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="7"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter Name="PART_ContentPresenter"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+            <Style Selector="^:pointerover /template/ Border#Bd">
+                <Setter Property="Background" Value="#4A3FB5"/>
+                <Setter Property="BorderBrush" Value="#4A3FB5"/>
+            </Style>
+            <Style Selector="^:pressed /template/ Border#Bd">
+                <Setter Property="Background" Value="#3A30A0"/>
+                <Setter Property="BorderBrush" Value="#3A30A0"/>
+            </Style>
+        </ControlTheme>
+
+        <!-- Outline purple button -->
+        <ControlTheme x:Key="BtnOutline" TargetType="Button" BasedOn="{StaticResource BtnBase}">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#C0B8F0"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="Foreground" Value="#5A4FC8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="14,6"/>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="7"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter Name="PART_ContentPresenter"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+            <Style Selector="^:pointerover /template/ Border#Bd">
+                <Setter Property="Background" Value="#F3F1FC"/>
+            </Style>
+        </ControlTheme>
+
+        <!-- Danger button -->
+        <ControlTheme x:Key="BtnDanger" TargetType="Button" BasedOn="{StaticResource BtnBase}">
+            <Setter Property="Foreground" Value="#888888"/>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="7"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter Name="PART_ContentPresenter"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+            <Style Selector="^:pointerover /template/ Border#Bd">
+                <Setter Property="Background" Value="#FFF0F0"/>
+                <Setter Property="BorderBrush" Value="#F0C0C0"/>
+            </Style>
+        </ControlTheme>
+    </Window.Resources>
+
+    <Window.Styles>
+        <!-- CheckBox style -->
+        <Style Selector="CheckBox">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <!-- ListBox container: strip selection/focus visuals, keep it flat like the original GridView -->
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <ContentPresenter Name="PART_ContentPresenter"
+                                      Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+
+        <!-- Options textbox (keeps default theme, overrides visuals) -->
+        <Style Selector="TextBox.opt-input">
+            <Setter Property="BorderBrush" Value="#D0CDC5"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="6,3"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="CornerRadius" Value="5"/>
+            <Style Selector="^:focus">
+                <Setter Property="BorderBrush" Value="#7A6FD8"/>
+            </Style>
+        </Style>
+
+        <!-- Table row hover/selection -->
+        <Style Selector="Border.file-row">
+            <Setter Property="Background" Value="Transparent"/>
+            <Style Selector="^:pointerover">
+                <Setter Property="Background" Value="#FAF9F5"/>
+            </Style>
+            <Style Selector="^.selected">
+                <Setter Property="Background" Value="#F4F1FC"/>
+            </Style>
+        </Style>
+
+        <!-- Sidebar tree item hover/selection -->
+        <Style Selector="Border.tree-item">
+            <Setter Property="Background" Value="Transparent"/>
+            <Style Selector="^:pointerover">
+                <Setter Property="Background" Value="#F8F7F2"/>
+            </Style>
+            <Style Selector="^.selected">
+                <Setter Property="Background" Value="#EEEAF8"/>
+            </Style>
+        </Style>
+    </Window.Styles>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <!-- Top bar -->
+            <RowDefinition Height="44"/>
+            <!-- Options bar -->
+            <RowDefinition Height="Auto"/>
+            <!-- Main content -->
+            <RowDefinition Height="*"/>
+            <!-- Bottom bar -->
+            <RowDefinition Height="48"/>
+        </Grid.RowDefinitions>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- TOP BAR -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="#E0DDD5" BorderThickness="0,0,0,1">
+            <Grid Margin="16,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Title -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
+                    <TextBlock Text="📋" FontSize="18" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="Easy Clipper"
+                               FontSize="15" FontWeight="SemiBold"
+                               Foreground="#1A1A1A" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Badge -->
+                <Border Grid.Column="1" Margin="10,0,0,0"
+                        Background="#E8E5F8" CornerRadius="10"
+                        Padding="8,2" VerticalAlignment="Center">
+                    <TextBlock x:Name="TbSelectedBadge" Text="0 файлов выбрано"
+                               FontSize="11" FontWeight="Medium" Foreground="#4A3FB5"/>
+                </Border>
+
+                <!-- Spacer -->
+                <Panel Grid.Column="2"/>
+
+                <!-- Select All / Deselect -->
+                <Button Grid.Column="3" Content="Выбрать все"
+                        Theme="{StaticResource BtnBase}" Margin="0,0,6,0"
+                        Click="SelectAll_Click"/>
+                <Button Grid.Column="4" Content="Снять все"
+                        Theme="{StaticResource BtnBase}"
+                        Click="DeselectAll_Click"/>
+            </Grid>
+        </Border>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- OPTIONS BAR -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <Border Grid.Row="1" Background="#FFFFFF" BorderBrush="#E0DDD5" BorderThickness="0,0,0,1">
+            <WrapPanel Margin="14,7" Orientation="Horizontal" VerticalAlignment="Center">
+
+                <!-- Prefix toggle + template -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
+                    <CheckBox x:Name="ChkPrefix" IsChecked="True" Margin="0,0,5,0"/>
+                    <TextBlock Text="Префикс файла:" FontSize="12" Foreground="#555555"
+                               VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBox x:Name="TbPrefixTemplate"
+                             Text="// ===== File: {{name}} ===== //"
+                             Classes="opt-input"
+                             Width="230" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Separator -->
+                <Border Width="1" Height="20" Background="#E0DDD5" Margin="0,0,14,0"/>
+
+                <!-- Optimize imports -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
+                    <CheckBox x:Name="ChkOptImports" Margin="0,0,5,0"/>
+                    <TextBlock Text="Оптимизировать импорты" FontSize="12" Foreground="#555555"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Separator -->
+                <Border Width="1" Height="20" Background="#E0DDD5" Margin="0,0,14,0"/>
+
+                <!-- Export to txt -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
+                    <CheckBox x:Name="ChkExport" Margin="0,0,5,0"/>
+                    <TextBlock Text="Экспорт в .txt" FontSize="12" Foreground="#555555"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Separator -->
+                <Border Width="1" Height="20" Background="#E0DDD5" Margin="0,0,14,0"/>
+
+                <!-- Separator lines count -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Разделитель (пустых строк):" FontSize="12" Foreground="#555555"
+                               VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBox x:Name="TbSepLines" Text="2"
+                             Classes="opt-input"
+                             Width="46" VerticalAlignment="Center"
+                             TextInput="TbSepLines_TextInput"/>
+                </StackPanel>
+            </WrapPanel>
+        </Border>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- MAIN CONTENT: sidebar + table -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="270" MinWidth="180" MaxWidth="380"/>
+                <ColumnDefinition Width="3"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ─── LEFT SIDEBAR ─── -->
+            <Border Grid.Column="0" Background="#FFFFFF" BorderBrush="#E0DDD5" BorderThickness="0,0,1,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Sidebar header -->
+                    <Border Grid.Row="0" BorderBrush="#EEEEEE" BorderThickness="0,0,0,1" Padding="12,8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="📂 Файлы" FontSize="13" FontWeight="Medium"
+                                       Foreground="#555555" VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="+ Папка" Theme="{StaticResource BtnBase}"
+                                        FontSize="11" Padding="8,3" Margin="0,0,4,0"
+                                        Click="AddFolder_Click"/>
+                                <Button Content="+ Файлы" Theme="{StaticResource BtnBase}"
+                                        FontSize="11" Padding="8,3"
+                                        Click="AddFiles_Click"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Drop zone -->
+                    <Border Grid.Row="1" Margin="10,8" Padding="10,12"
+                            x:Name="DropZoneBorder"
+                            BorderThickness="1.5" CornerRadius="8"
+                            Cursor="Hand"
+                            BorderBrush="#C8C5BC"
+                            PointerPressed="DropZone_Click">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="📥 Перетащите файлы"
+                                       FontSize="12" Foreground="#999999"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Text="или нажмите для выбора"
+                                       FontSize="11" Foreground="#BBBBBB"
+                                       HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- File tree -->
+                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl x:Name="FileTree" Margin="0,4,0,4">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Classes="tree-item"
+                                            Classes.selected="{Binding IsSelected}"
+                                            Padding="12,5" Cursor="Hand"
+                                            PointerPressed="TreeItem_Click">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox Grid.Column="0"
+                                                      IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                      Margin="0,0,5,0"
+                                                      Click="TreeItemCb_Click"/>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding LangIcon}"
+                                                       FontSize="13" Margin="0,0,5,0"
+                                                       VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2"
+                                                       Text="{Binding Name}"
+                                                       FontSize="12" Foreground="#222222"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       ToolTip.Tip="{Binding FullName}"/>
+                                            <TextBlock Grid.Column="3"
+                                                       Text="{Binding SizeKb, StringFormat='{}{0:F1}к'}"
+                                                       FontSize="11" Foreground="#AAAAAA"
+                                                       VerticalAlignment="Center" Margin="4,0,0,0"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- Splitter -->
+            <GridSplitter Grid.Column="1" Width="3" HorizontalAlignment="Stretch"
+                          Background="#E8E5DE" Cursor="SizeWestEast"/>
+
+            <!-- ─── RIGHT: TABLE ─── -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Empty state -->
+                <StackPanel x:Name="EmptyState" Grid.Row="1"
+                            VerticalAlignment="Center" HorizontalAlignment="Center"
+                            IsVisible="True">
+                    <TextBlock Text="📋" FontSize="40" HorizontalAlignment="Center" Opacity="0.35"/>
+                    <TextBlock Text="Добавьте файлы через боковую панель"
+                               FontSize="13" Foreground="#AAAAAA"
+                               HorizontalAlignment="Center" Margin="0,8,0,4"/>
+                    <TextBlock Text="Поддерживаются .py, .js, .ts, .cs, .java, .cpp, .go, .rs и другие"
+                               FontSize="11" Foreground="#BBBBBB"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Table header -->
+                <Border Grid.Row="0" Background="#F8F7F2" BorderBrush="#E0DDD5" BorderThickness="0,0,0,1.5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="38"/>
+                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="90"/>
+                            <ColumnDefinition Width="90"/>
+                            <ColumnDefinition Width="90"/>
+                            <ColumnDefinition Width="90"/>
+                            <ColumnDefinition Width="80"/>
+                            <ColumnDefinition Width="*" MinWidth="60"/>
+                            <ColumnDefinition Width="32"/>
+                        </Grid.ColumnDefinitions>
+                        <CheckBox x:Name="HeaderCheckBox" Grid.Column="0"
+                                  IsThreeState="True"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Click="HeaderCheckBox_Click"/>
+                        <TextBlock Grid.Column="1" Text="Имя файла" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#555555" VerticalAlignment="Center" Margin="8,6"/>
+                        <TextBlock Grid.Column="2" Text="Язык" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#555555" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="3" Text="Токенов" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#555555" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Grid.Column="4" Text="Символов" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#555555" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Grid.Column="5" Text="Размер (КБ)" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#555555" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Grid.Column="6" Text="Статус" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#555555" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="7" Text="Путь" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#555555" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- Table rows -->
+                <ListBox x:Name="MainListView" Grid.Row="1"
+                         Background="#FFFFFF"
+                         BorderThickness="0"
+                         IsVisible="False"
+                         SelectionMode="Single">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Classes="file-row"
+                                    Classes.selected="{Binding IsSelected}"
+                                    BorderBrush="#F0EDE5" BorderThickness="0,0,0,1">
+                                <Grid Height="34">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="38"/>
+                                        <ColumnDefinition Width="180"/>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="*" MinWidth="60"/>
+                                        <ColumnDefinition Width="32"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <CheckBox Grid.Column="0"
+                                              IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Click="RowCheckBox_Click"/>
+
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}"
+                                               FontFamily="Consolas" FontSize="12"
+                                               Foreground="#333333" VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"
+                                               ToolTip.Tip="{Binding FullName}"/>
+
+                                    <Border Grid.Column="2" CornerRadius="4" Padding="6,2"
+                                            Background="{Binding Language, Converter={StaticResource LangBrush}}"
+                                            HorizontalAlignment="Left" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Language}"
+                                                   FontSize="10" FontWeight="Medium"
+                                                   Foreground="{Binding Language, Converter={StaticResource LangFg}}"/>
+                                    </Border>
+
+                                    <TextBlock Grid.Column="3" Text="{Binding TokenCount, StringFormat='{}{0:N0}'}"
+                                               FontSize="12" Foreground="#666666"
+                                               HorizontalAlignment="Right" VerticalAlignment="Center"
+                                               FontFamily="Consolas" Margin="0,0,8,0"/>
+
+                                    <TextBlock Grid.Column="4" Text="{Binding CharCount, Converter={StaticResource CharCountConv}}"
+                                               FontSize="12" Foreground="#666666"
+                                               HorizontalAlignment="Right" VerticalAlignment="Center"
+                                               FontFamily="Consolas" Margin="0,0,8,0"/>
+
+                                    <TextBlock Grid.Column="5" Text="{Binding SizeKb, StringFormat='{}{0:F1}'}"
+                                               FontSize="12" Foreground="#666666"
+                                               HorizontalAlignment="Right" VerticalAlignment="Center"
+                                               FontFamily="Consolas" Margin="0,0,8,0"/>
+
+                                    <TextBlock Grid.Column="6" Text="{Binding StatusText}"
+                                               FontSize="11"
+                                               Foreground="{Binding Status, Converter={StaticResource StatusColor}}"
+                                               VerticalAlignment="Center"/>
+
+                                    <TextBlock Grid.Column="7" Text="{Binding FullName}"
+                                               FontFamily="Consolas" FontSize="11"
+                                               Foreground="#AAAAAA" VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"
+                                               ToolTip.Tip="{Binding FullName}"/>
+
+                                    <Button Grid.Column="8" Content="✕"
+                                            FontSize="11" Foreground="#BBBBBB"
+                                            Background="Transparent" BorderThickness="0"
+                                            Cursor="Hand" Padding="2"
+                                            Tag="{Binding}"
+                                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                                            Click="RemoveFile_Click"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Grid>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- BOTTOM BAR -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <Border Grid.Row="3" Background="#FFFFFF" BorderBrush="#E0DDD5" BorderThickness="0,1.5,0,0">
+            <Grid Margin="14,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Stats -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock FontSize="12" Foreground="#666666" VerticalAlignment="Center">
+                        <Run Text="Файлов:"/>
+                        <Run x:Name="RunTotal" Text="0" FontWeight="SemiBold" Foreground="#222222"/>
+                    </TextBlock>
+                    <TextBlock Text=" · " FontSize="12" Foreground="#CCCCCC" VerticalAlignment="Center"/>
+                    <TextBlock FontSize="12" Foreground="#666666" VerticalAlignment="Center">
+                        <Run Text="Выбрано:"/>
+                        <Run x:Name="RunSelected" Text="0" FontWeight="SemiBold" Foreground="#222222"/>
+                    </TextBlock>
+                    <TextBlock Text=" · " FontSize="12" Foreground="#CCCCCC" VerticalAlignment="Center"/>
+                    <TextBlock FontSize="12" Foreground="#666666" VerticalAlignment="Center">
+                        <Run Text="Символов:"/>
+                        <Run x:Name="RunChars" Text="0" FontWeight="SemiBold" Foreground="#222222"/>
+                    </TextBlock>
+                    <TextBlock FontSize="12" Foreground="#666666" VerticalAlignment="Center">
+                        <Run Text="  Токенов:"/>
+                        <Run x:Name="RunTokens" Text="0" FontWeight="SemiBold" Foreground="#222222"/>
+                    </TextBlock>
+                    <TextBlock Text=" · " FontSize="12" Foreground="#CCCCCC" VerticalAlignment="Center"/>
+                    <TextBlock FontSize="12" Foreground="#666666" VerticalAlignment="Center">
+                        <Run Text="Размер:"/>
+                        <Run x:Name="RunSize" Text="0 КБ" FontWeight="SemiBold" Foreground="#222222"/>
+                    </TextBlock>
+                    <TextBlock Text=" · " FontSize="12" Foreground="#CCCCCC" VerticalAlignment="Center"/>
+                    <TextBlock FontSize="12" Foreground="#666666" VerticalAlignment="Center">
+                        <Run Text="Изменено:"/>
+                        <Run x:Name="RunModified" Text="0" FontWeight="SemiBold" Foreground="#E04040"/>
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- Action buttons -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="BtnRefresh" Content="↻ Обновить статус"
+                            Theme="{StaticResource BtnBase}" Margin="0,0,6,0"
+                            Click="Refresh_Click"/>
+                    <Button x:Name="BtnClear" Content="🗑 Очистить"
+                            Theme="{StaticResource BtnDanger}" Margin="0,0,8,0"
+                            Click="Clear_Click"/>
+                    <Button x:Name="BtnExportOnly" Content="📥 Сохранить .txt"
+                            Theme="{StaticResource BtnOutline}" Margin="0,0,8,0"
+                            Click="ExportOnly_Click"
+                            IsVisible="{Binding IsChecked, ElementName=ChkExport}"/>
+                    <Button x:Name="BtnCopy" Content="📋 Скопировать выбранные"
+                            Theme="{StaticResource BtnPrimary}"
+                            Click="Copy_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

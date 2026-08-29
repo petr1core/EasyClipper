@@ -1,14 +1,14 @@
 using System;
 using System.Globalization;
-using System.Windows.Data;
-using System.Windows.Media;
+using Avalonia.Data.Converters;
+using Avalonia.Media;
 
 namespace EasyClipper
 {
     // ── Language → badge background ─────────────────────────────────────
     public class LangToBadgeBrushConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             var lang = value as string ?? "other";
             return lang.ToLowerInvariant() switch
@@ -24,13 +24,13 @@ namespace EasyClipper
                 _            => new SolidColorBrush(Color.FromRgb(0xF0, 0xF0, 0xEC)),
             };
         }
-        public object ConvertBack(object v, Type t, object p, CultureInfo c) => throw new NotImplementedException();
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
     }
 
     // ── Language → badge foreground ─────────────────────────────────────
     public class LangToBadgeFgConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             var lang = value as string ?? "other";
             return lang.ToLowerInvariant() switch
@@ -46,13 +46,13 @@ namespace EasyClipper
                 _            => new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x55)),
             };
         }
-        public object ConvertBack(object v, Type t, object p, CultureInfo c) => throw new NotImplementedException();
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
     }
 
     // ── FileStatus → text color ──────────────────────────────────────────
     public class StatusToColorConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is FileStatus s)
                 return s switch
@@ -64,22 +64,22 @@ namespace EasyClipper
                 };
             return Brushes.Black;
         }
-        public object ConvertBack(object v, Type t, object p, CultureInfo c) => throw new NotImplementedException();
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
     }
 
     // ── bytes → "N.N КБ" ────────────────────────────────────────────────
     public class FileSizeConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
             value is long b ? $"{b / 1024.0:F1} КБ" : "—";
-        public object ConvertBack(object v, Type t, object p, CultureInfo c) => throw new NotImplementedException();
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
     }
 
     // ── long chars → "N N N" with RU separators ─────────────────────────
     public class CharCountConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
             value is long n ? n.ToString("N0", new CultureInfo("ru-RU")) : "—";
-        public object ConvertBack(object v, Type t, object p, CultureInfo c) => throw new NotImplementedException();
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
     }
 }
